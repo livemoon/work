@@ -1,3 +1,9 @@
+########################################
+# This job add user and add his public 
+# key into $HOME/.ssh dir
+# Give sudo pri to him
+########################################
+
 #!/usr/bin/perl
 
 use warnings;
