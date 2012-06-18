@@ -91,7 +91,7 @@ sed -i 's/%SERVICE_PASSWORD%/'"$ADMIN_PASS"'/' /etc/nova/api-paste.ini
 cp files/nova.conf /etc/nova/nova.conf
 chmod 644 /etc/nova/nova.conf
 
-echo "--fixed_range=$FIXED_RANGE" >> /etc/nova/nova.conf
+echo -e "\n--fixed_range=$FIXED_RANGE" >> /etc/nova/nova.conf
 sed -i 's/%MANAGE_IP%/'"$MANAGE_IP"'/g' /etc/nova/nova.conf
 sed -i 's/%PUBLIC%/'"$PUBLIC"'/g' /etc/nova/nova.conf
 sed -i 's/%BRIDGE%/'"$BRIDGE"'/g' /etc/nova/nova.conf
