@@ -1,19 +1,17 @@
-MYSQL_PASS=
-MYSQL_IP= 
-DB_PASS=
-ADMIN_TOKEN=
-ADMIN_PASS= 
-FIXED_RANGE=
-MANAGE_IP=
-PUBLIC=${PUBLIC:-eth0}
-BRIDGE=${BRIDGE:-br100}
-INTERNAL=
-GALNCE_IP=
-ISCSI_PREFIX=
-PUBLIC_IP=
+#!/bin/bash
+
+set +x
+
+TYPE=$1
+TOP_DIR=$(cd $(dirname "$0") && pwd)
+source $TOP_DIR/localrc
+source $TOP_DIR/functions
+
+if [[ $TYPE = "controller" ]]; then
 
 apt-get update
 apt-get install
+
 
 apt-get install -y ntp
 echo "server ntp.ubuntu.com iburst" >> /etc/ntp.conf
@@ -44,10 +42,10 @@ mysql -uroot -p$MYSQL_PASS -e "GRANT ALL PRIVILEGES ON keystone.* to 'keystonedb
 mysql -uroot -p$MYSQL_PASS -e "SET PASSWORD FOR 'keystonedbadmin'@'%' = PASSWORD('$DB_PASS');"
 
 
-apt-get install rabbitmq-server memcached python-memcache
+apt-get install -y rabbitmq-server memcached python-memcache
 
 
-apt-get install keystone python-keystone python-keystoneclient
+apt-get install -y keystone python-keystone python-keystoneclient
 cp files/keystone.conf /etc/keystone/keystone.conf
 sed -i 's/admin_token = ADMIN/admin_token = '"$ADMIN_TOKEN"'/' /etc/keystone/keystone.conf
 sed -i 's#sqlite:////var/lib/keystone/keystone.db#mysql://keystonedbadmin:'"$DB_PASS"'@'"$MYSQL_IP"'/keystone#' /etc/keystone/keystone.conf
@@ -56,7 +54,7 @@ service keystone restart
 keystone-manage db_sync
 ./files/keystone_data.sh
 
-apt-get install glance glance-api glance-client glance-common glance-registry python-glance
+apt-get install -y glance glance-api glance-client glance-common glance-registry python-glance
 sed -i 's/%SERVICE_TENANT_NAME%/admin/' /etc/glance/glance-api-paste.ini
 sed -i 's/%SERVICE_USER%/admin/' /etc/glance/glance-api-paste.ini
 sed -i 's/%SERVICE_PASSWORD%/'"$ADMIN_PASS"'/' /etc/glance/glance-api-paste.ini
@@ -81,8 +79,8 @@ service glance-api restart
 sudo glance-manage version_control 0 
 sudo glance-manage db_sync
 
-apt-get install nova-api nova-cert nova-common nova-compute nova-compute-kvm nova-doc nova-network nova-scheduler novnc nova-volume python-nova python-novaclient
-apt-get install nova-cert nova-consoleauth
+apt-get install -y nova-api nova-cert nova-common nova-compute nova-compute-kvm nova-doc nova-network nova-scheduler novnc nova-volume python-nova python-novaclient
+apt-get install -y nova-cert nova-consoleauth
 
 sed -i 's/%SERVICE_TENANT_NAME%/admin/' /etc/nova/api-paste.ini
 sed -i 's/%SERVICE_USER%/admin/' /etc/nova/api-paste.ini
@@ -117,5 +115,21 @@ do
   service $i status
 done
 
-apt-get install libapache2-mod-wsgi openstack-dashboard
+apt-get install -y libapache2-mod-wsgi openstack-dashboard
 service apache2 restart
+
+elif [[ $TYPE = "compute" ]]; then
+
+    apt-get update
+    apt-get install
+
+    apt-get install -y ntp
+    echo "server $CONTROLLER_IP" >> /etc/ntp.conf
+    echo "fudge 127.127.1.0 stratum 10" >> /etc/ntp.conf
+    /etc/init.d/ntp restart
+
+    apt-get install -y nova-compute nova-network
+    
+else
+    echo "please type controller or compute"
+fi

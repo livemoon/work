@@ -1,0 +1,9 @@
+function print_flags {
+    echo -e "\nYou flags is:"
+    for i in `cat $1`; do
+        echo "        "$i
+    done
+
+    echo -e "If you want to re-set these flags, please edit localrc file\n"
+}
+
