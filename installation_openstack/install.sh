@@ -22,6 +22,8 @@ fudge 127.127.1.0 stratum 10
 EOF
 /etc/init.d/ntp restart
 
+apt-get install -y bridge-utils
+
 apt-get install -y mysql-server python-mysqldb
 
 sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mysql/my.cnf
@@ -52,6 +54,8 @@ sed -i 's#sqlite:////var/lib/keystone/keystone.db#mysql://keystonedbadmin:'"$DB_
 
 service keystone restart
 keystone-manage db_sync
+sed -i 's/${ADMIN_PASSWORD}/'"$ADMIN_PASS"'/' files/keystone_data.sh
+sed -i 's/hastexo/'"$ADMIN_PASS"'/' files/keystone_data.sh
 ./files/keystone_data.sh
 
 apt-get install -y glance glance-api glance-client glance-common glance-registry python-glance
@@ -79,7 +83,7 @@ service glance-api restart
 sudo glance-manage version_control 0 
 sudo glance-manage db_sync
 
-apt-get install -y nova-api nova-cert nova-common nova-compute nova-compute-kvm nova-doc nova-network nova-scheduler novnc nova-volume python-nova python-novaclient
+apt-get install -y nova-api nova-cert nova-common nova-compute-kvm nova-doc nova-scheduler novnc python-nova python-novaclient
 apt-get install -y nova-cert nova-consoleauth
 
 sed -i 's/%SERVICE_TENANT_NAME%/admin/' /etc/nova/api-paste.ini
@@ -100,9 +104,9 @@ sed -i 's/%PUBLIC_IP%/'"$PUBLIC_IP"'/g' /etc/nova/nova.conf
 sed -i 's/%GLANCE_IP%/'"$GLANCE_IP"'/g' /etc/nova/nova.conf
 sed -i 's/%ISCSI_PREFIX%/'"$ISCSI_PREFIX"'/g' /etc/nova/nova.conf
 
-chmod 777 /usr/lib/python2.7/dist-packages/
+#chmod 777 /usr/lib/python2.7/dist-packages/
 
-for i in nova-api nova-scheduler nova-compute nova-network nova-volume nova-cert nova-consoleauth novnc
+for i in nova-api nova-scheduler nova-cert nova-consoleauth novnc
 do
   service $i restart
 done
@@ -110,7 +114,7 @@ done
 nova-manage db sync
 nova-manage network create private --fixed_range_v4=$FIXED_RANGE --num_networks=1 --bridge=$BRIDGE --bridge_interface=$INTERNAL --network_size=256
 
-for i in nova-api nova-scheduler nova-compute nova-network nova-volume nova-cert nova-consoleauth novnc
+for i in nova-api nova-scheduler nova-cert nova-consoleauth novnc
 do
   service $i status
 done
@@ -124,6 +128,7 @@ elif [[ $TYPE = "compute" ]]; then
     apt-get install
 
     apt-get install -y ntp
+    apt-get install -y bridge-utils
     echo "server $CONTROLLER_IP" >> /etc/ntp.conf
     echo "fudge 127.127.1.0 stratum 10" >> /etc/ntp.conf
     /etc/init.d/ntp restart
