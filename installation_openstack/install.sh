@@ -52,6 +52,8 @@ sed -i 's#sqlite:////var/lib/keystone/keystone.db#mysql://keystonedbadmin:'"$DB_
 
 service keystone restart
 keystone-manage db_sync
+sed -i 's/%ADMIN_PASSWORD%/'"$ADMIN_PASS"'/' ./file/keystone_data.sh
+sed -i 's/%TOKEN%/'"$ADMIN_TOKEN"'/' ./file/keystone_data.sh
 ./files/keystone_data.sh
 
 apt-get install -y glance glance-api glance-client glance-common glance-registry python-glance
